@@ -101,24 +101,31 @@ class TaxDetails(BaseModel):
     )
     
     @validator('ibs_value', 'cbs_value', 'selective_tax_value', always=True)
-    def calculate_tax_values(cls, v, values):
+    def calculate_tax_values(cls, v, values, **kwargs):
         """Calcula valores de tributos baseado na base e alíquota."""
-        field_name = cls.__fields__[v].name if hasattr(cls, '__fields__') else ''
+        # Obter nome do campo do info se disponível
+        info = kwargs.get('info', None)
+        field_name = info.field_name if info and hasattr(info, 'field_name') else ''
         
-        if 'ibs_value' in field_name:
+        # Fallback: tentar identificar pelo contexto dos valores
+        if not field_name:
+            # Se não conseguir identificar o campo, retornar o valor como está
+            return v if v is not None else Decimal('0')
+        
+        if field_name == 'ibs_value':
             base = values.get('ibs_base', Decimal('0'))
             rate = values.get('ibs_rate', Decimal('0'))
             return base * rate / 100
-        elif 'cbs_value' in field_name:
+        elif field_name == 'cbs_value':
             base = values.get('cbs_base', Decimal('0'))
             rate = values.get('cbs_rate', Decimal('0'))
             return base * rate / 100
-        elif 'selective_tax_value' in field_name:
+        elif field_name == 'selective_tax_value':
             base = values.get('selective_tax_base', Decimal('0'))
             rate = values.get('selective_tax_rate', Decimal('0'))
             return base * rate / 100
         
-        return v
+        return v if v is not None else Decimal('0')
 
 
 class ProductItem(BaseModel):
