@@ -69,10 +69,26 @@ def create_app() -> FastAPI:
     )
     
     # === REGISTRO DE ROTAS ===
-    from app.api.routes import health, documents, jobs
+    from app.api.routes import health, documents, jobs, xml_reader
     app.include_router(health.router, prefix="/api/v1")
     app.include_router(documents.router, prefix="/api/v1")
     app.include_router(jobs.router, prefix="/api/v1")
+    app.include_router(xml_reader.router, prefix="/api/v1")  # Nova rota especializada
+    
+    # === ENDPOINT RAIZ ===
+    @app.get("/")
+    async def root():
+        """Endpoint raiz da API com informações básicas."""
+        from datetime import datetime
+        return {
+            "message": "API Fiscal XML - Processamento de Documentos Fiscais",
+            "version": settings.app_version,
+            "status": "operational",
+            "timestamp": datetime.utcnow().isoformat(),
+            "docs": "/docs" if settings.debug else "disabled",
+            "health": "/api/v1/health",
+            "xml_reader": "/api/v1/xml"
+        }
     
     return app
 
